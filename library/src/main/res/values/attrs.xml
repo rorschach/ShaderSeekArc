@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="ShaderSeekArc" >
+        <attr name="startValue" format="float" />
+        <attr name="endValue" format="float" />
+        <attr name="progress" format="float" />
+        <attr name="startAngle" format="float" />
+        <attr name="endAngle" format="float" />
+        <attr name="rotationAngle" format="integer" />
+        <attr name="showMark" format="boolean" />
+        <attr name="showProgress" format="boolean" />
+    </declare-styleable>
+</resources>
