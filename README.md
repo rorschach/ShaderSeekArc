@@ -48,7 +48,6 @@ in `.xml` file
 ```
 
 
-
 in `.java` file
 ```
     ShaderSeekArc seekArc = (ShaderSeekArc) findViewById(R.id.seek_arc);
@@ -97,8 +96,9 @@ in `.java` file
    });
 ```
 
+#### ScreenShots
 
-default state:
+default state
 
 ![default](https://raw.githubusercontent.com/rorschach/ShaderSeekArc/master/screenshots/default.png)
 
@@ -116,7 +116,7 @@ change by xml and code
 
 #### LICENSE
 
-   Copyright (c) 2016, Rorschach <rorschach.lolipop@gmail.com>
+   Copyright (c) 2016, Rorschach <rorschach.loliopop@gmail.com>
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
