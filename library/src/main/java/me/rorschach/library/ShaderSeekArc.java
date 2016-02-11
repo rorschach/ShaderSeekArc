@@ -23,10 +23,10 @@ public class ShaderSeekArc extends View {
     private float mEndValue = 28;
     private float mProgress = 24;
 
-    private float mStartAngle = -180;
-    private float mEndAngle = 0;
+    private float mStartAngle = -225;
+    private float mEndAngle = 45;
 
-    private boolean mIsShowMark = false;
+    private boolean mIsShowMark = true;
     private boolean mIsShowProgress = true;
 
     private Paint mArcPaint;
@@ -35,17 +35,30 @@ public class ShaderSeekArc extends View {
 
     private float mMinSize;
     private float mArcWidth;
-    private float mRadius;
+    private float mArcRadius;
     private float mCenter;
     private float mInnerRadius;
 
     private RectF mArcRectF;
 
+    private float mArcWidthRate = 1 / 3f;
+    private static final int sArcTotalWidth = 240;
+
     private SweepGradient mSweepGradient;
 
-    private int[] colors = {0xFF33B5E5, 0xFFFFBB33};
+    private int mStartColor = 0xFF33B5E5;
+    private int mEndColor = 0xFFFFBB33;
 
-    private float[] positions = {0f, (mEndAngle - mStartAngle) / 306f};
+    private int[] mColors = new int[]{mStartColor, mEndColor};
+
+    private float[] mPositions = null;
+
+    private int mMarkColor = 0xff64646f;
+    private int mProgressTextColor = 0xff64646f;
+    private int mLineColor = 0xffdddddd;
+
+    private int mMarkSize = 30;
+    private int mProgressTextSize = 35;
 
     private OnSeekArcChangeListener mOnSeekArcChangeListener;
 
@@ -82,16 +95,31 @@ public class ShaderSeekArc extends View {
 
             mStartValue = typedArray.getFloat(R.styleable.ShaderSeekArc_startValue, mStartValue);
             mEndValue = typedArray.getFloat(R.styleable.ShaderSeekArc_endValue, mEndValue);
+            checkValueSet();
 
             mStartAngle = typedArray.getFloat(R.styleable.ShaderSeekArc_startAngle, mStartAngle);
             mEndAngle = typedArray.getFloat(R.styleable.ShaderSeekArc_endAngle, mEndAngle);
+            checkAngleSet();
 
             mProgress = typedArray.getFloat(R.styleable.ShaderSeekArc_progress, mProgress);
-            mProgress = checkProgress(mProgress);
+            mProgress = checkProgressSet(mProgress);
+
+            mArcWidthRate = typedArray.getFloat(R.styleable.ShaderSeekArc_arcWidthRate, mArcWidthRate);
+            checkArcWidthRate();
+
+            mStartColor = typedArray.getInt(R.styleable.ShaderSeekArc_startColor, mStartColor);
+            mEndColor = typedArray.getInt(R.styleable.ShaderSeekArc_endColor, mEndColor);
 
             mIsShowMark = typedArray.getBoolean(R.styleable.ShaderSeekArc_showMark, mIsShowMark);
             mIsShowProgress = typedArray.getBoolean(R.styleable.ShaderSeekArc_showProgress, mIsShowProgress);
 
+            mMarkSize = typedArray.getInt(R.styleable.ShaderSeekArc_markSize, mMarkSize);
+            mMarkColor = typedArray.getInt(R.styleable.ShaderSeekArc_markColor, mMarkColor);
+
+            mProgressTextSize = typedArray.getInt(R.styleable.ShaderSeekArc_progressTextSize, mProgressTextSize);
+            mProgressTextColor = typedArray.getInt(R.styleable.ShaderSeekArc_progressTextColor, mProgressTextColor);
+
+            mLineColor = typedArray.getInt(R.styleable.ShaderSeekArc_lineColor, mLineColor);
         } finally {
             if (typedArray != null) {
                 typedArray.recycle();
@@ -107,7 +135,7 @@ public class ShaderSeekArc extends View {
         mLinePaint = new Paint();
         mLinePaint.setStyle(Paint.Style.STROKE);
         mLinePaint.setAntiAlias(true);
-        mLinePaint.setColor(0xffdddddd);
+        mLinePaint.setColor(mLineColor);
 
         mTextPaint = new Paint();
         mTextPaint.setAntiAlias(true);
@@ -115,23 +143,27 @@ public class ShaderSeekArc extends View {
     }
 
     private void initSize(int width, int height) {
+
         mMinSize = Math.min(width, height) / 600f;
-        mArcWidth = 60 * mMinSize;
-        mInnerRadius = 180 * mMinSize;
         mCenter = 300 * mMinSize;
-        mRadius = 208 * mMinSize;
+        mArcWidth = mArcWidthRate * sArcTotalWidth * mMinSize;
+        mInnerRadius = (1 - mArcWidthRate) * sArcTotalWidth * mMinSize;
+        mArcRadius = mInnerRadius + mArcWidth / 2;
 
         mArcRectF = new RectF(
-                mCenter - mRadius,
-                mCenter - mRadius,
-                mCenter + mRadius,
-                mCenter + mRadius);
+                mCenter - mArcRadius,
+                mCenter - mArcRadius,
+                mCenter + mArcRadius,
+                mCenter + mArcRadius);
 
+        if (mPositions != null) {
+            mSweepGradient = new SweepGradient(mCenter, mCenter, mColors, mPositions);
+        } else {
+            mSweepGradient = new SweepGradient(mCenter, mCenter, mColors, null);
+        }
 
-        mSweepGradient = new SweepGradient(mCenter, mCenter, colors, positions);
         Matrix matrix = new Matrix();
         matrix.preRotate(mStartAngle, mCenter, mCenter);
-//        matrix.postRotate(mEndAngle, mCenter, mCenter);
         mSweepGradient.setLocalMatrix(matrix);
     }
 
@@ -149,14 +181,12 @@ public class ShaderSeekArc extends View {
         if (widthMode == MeasureSpec.EXACTLY) {
             width = widthSize;
         } else if (widthMode == MeasureSpec.AT_MOST) {
-            //
             width = 600;
         }
 
         if (heightMode == MeasureSpec.EXACTLY) {
             height = heightSize;
         } else if (heightMode == MeasureSpec.AT_MOST) {
-            //
             height = 600;
         }
 
@@ -169,7 +199,7 @@ public class ShaderSeekArc extends View {
     protected void onDraw(Canvas canvas) {
         drawArc(canvas);
         drawLine(canvas);
-        drawProgress(canvas);
+        drawText(canvas);
     }
 
     private void drawArc(Canvas canvas) {
@@ -199,7 +229,9 @@ public class ShaderSeekArc extends View {
         mLinePaint.setStrokeWidth(mMinSize * 3f);
         float rotate = mStartAngle + 90;
         canvas.rotate(rotate, mCenter, mCenter);
-        mTextPaint.setTextSize(mMinSize * 30);
+
+        mTextPaint.setTextSize(mMinSize * mMarkSize);
+        mTextPaint.setColor(mMarkColor);
 
         float count = (mEndAngle - mStartAngle) / 3;
 
@@ -216,7 +248,7 @@ public class ShaderSeekArc extends View {
                             mTextPaint);
                 }
             }
-            canvas.drawLine(mCenter, mCenter - mInnerRadius,
+            canvas.drawLine(mCenter, mCenter - mInnerRadius + 0.5f,
                     mCenter, top,
                     mLinePaint);
             canvas.rotate(3, mCenter, mCenter);
@@ -225,8 +257,10 @@ public class ShaderSeekArc extends View {
         canvas.rotate(-rotate, mCenter, mCenter);
     }
 
-    private void drawProgress(Canvas canvas) {
-        mTextPaint.setTextSize(mMinSize * 30);
+    private void drawText(Canvas canvas) {
+        mTextPaint.setTextSize(mMinSize * mProgressTextSize);
+        mTextPaint.setColor(mProgressTextColor);
+
         if (mIsShowProgress) {
             canvas.drawText(String.format("%.1f", mProgress),
                     mCenter - 30 * mMinSize,
@@ -280,7 +314,7 @@ public class ShaderSeekArc extends View {
         double distance = Math.sqrt((x - mCenter) * (x - mCenter)
                 + (y - mCenter) * (y - mCenter));
 
-        return distance >= mInnerRadius && distance <= (mInnerRadius + mRadius);
+        return distance >= mInnerRadius && distance <= (mInnerRadius + mArcRadius);
     }
 
     private boolean checkAngle(double angle) {
@@ -319,12 +353,12 @@ public class ShaderSeekArc extends View {
     }
 
     public float getProgress() {
-        checkProgress(mProgress);
+        checkProgressSet(mProgress);
         return mProgress;
     }
 
     public void setProgress(float progress) {
-        checkProgress(progress);
+        checkProgressSet(progress);
         mProgress = progress;
         invalidate();
         if (mOnSeekArcChangeListener != null) {
@@ -332,10 +366,12 @@ public class ShaderSeekArc extends View {
         }
     }
 
-    private float checkProgress(float progress) {
-        progress = progress > mEndValue ? mEndValue : progress;
-        progress = progress < mStartValue ? mStartValue : progress;
-        return progress;
+    private float checkProgressSet(float progress) {
+        if (progress >= mStartValue && progress <= mEndValue) {
+            return progress;
+        } else {
+            throw new IllegalArgumentException("Progress is out of range!");
+        }
     }
 
     public float getStartValue() {
@@ -344,6 +380,7 @@ public class ShaderSeekArc extends View {
 
     public void setStartValue(float startValue) {
         mStartValue = startValue;
+        checkValueSet();
     }
 
     public float getEndValue() {
@@ -352,6 +389,13 @@ public class ShaderSeekArc extends View {
 
     public void setEndValue(float endValue) {
         mEndValue = endValue;
+        checkValueSet();
+    }
+
+    private void checkValueSet() {
+        if (mEndValue <= mStartValue) {
+            throw new IllegalArgumentException("End value should large than the start value!");
+        }
     }
 
     public float getStartAngle() {
@@ -360,6 +404,7 @@ public class ShaderSeekArc extends View {
 
     public void setStartAngle(float startAngle) {
         mStartAngle = startAngle;
+        checkAngleSet();
     }
 
     public float getEndAngle() {
@@ -368,6 +413,15 @@ public class ShaderSeekArc extends View {
 
     public void setEndAngle(float endAngle) {
         mEndAngle = endAngle;
+        checkAngleSet();
+    }
+
+    private void checkAngleSet() {
+        if (mEndAngle <= mStartAngle) {
+            throw new IllegalArgumentException("End angle should large than the start angle!");
+        } else if (mEndAngle - mStartAngle > 360) {
+            throw new IllegalArgumentException("Arc angle shall not exceed 360!");
+        }
     }
 
     public boolean isShowMark() {
@@ -387,19 +441,92 @@ public class ShaderSeekArc extends View {
     }
 
     public int[] getColors() {
-        return colors;
+        return mColors;
     }
 
     public void setColors(int[] colors) {
-        this.colors = colors;
+        this.mColors = colors;
     }
 
     public float[] getPositions() {
-        return positions;
+        return mPositions;
     }
 
     public void setPositions(float[] positions) {
-        this.positions = positions;
+        this.mPositions = positions;
+    }
+
+    public float getArcWidthRate() {
+        checkArcWidthRate();
+        return mArcWidthRate;
+    }
+
+    public void setArcWidthRate(float arcWidthRate) {
+        checkArcWidthRate();
+        mArcWidthRate = arcWidthRate;
+    }
+
+    private void checkArcWidthRate() {
+        mArcWidthRate = Math.min(mArcWidthRate, 0.7f);
+        mArcWidthRate = Math.max(0.3f, mArcWidthRate);
+    }
+
+    public int getStartColor() {
+        return mStartColor;
+    }
+
+    public void setStartColor(int startColor) {
+        mStartColor = startColor;
+        mColors[0] = mStartColor;
+    }
+
+    public int getEndColor() {
+        return mEndColor;
+    }
+
+    public void setEndColor(int endColor) {
+        mEndColor = endColor;
+        mColors[mColors.length - 1] = mEndColor;
+    }
+
+    public int getMarkColor() {
+        return mMarkColor;
+    }
+
+    public void setMarkColor(int markColor) {
+        mMarkColor = markColor;
+    }
+
+    public int getProgressTextColor() {
+        return mProgressTextColor;
+    }
+
+    public void setProgressTextColor(int progressTextColor) {
+        mProgressTextColor = progressTextColor;
+    }
+
+    public int getLineColor() {
+        return mLineColor;
+    }
+
+    public void setLineColor(int lineColor) {
+        mLineColor = lineColor;
+    }
+
+    public int getMarkSize() {
+        return mMarkSize;
+    }
+
+    public void setMarkSize(int markSize) {
+        mMarkSize = markSize;
+    }
+
+    public int getProgressTextSize() {
+        return mProgressTextSize;
+    }
+
+    public void setProgressTextSize(int progressTextSize) {
+        mProgressTextSize = progressTextSize;
     }
 
     public interface OnSeekArcChangeListener {

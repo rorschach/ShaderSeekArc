@@ -13,15 +13,24 @@
 
     <me.rorschach.library.ShaderSeekArc
         android:id="@+id/seek_arc"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        app:startValue="16"
-        app:endValue="28"
-        app:progress="24"
-        app:startAngle="-225"
-        app:endAngle="45"
-        app:showMark="true"
-        app:showProgress="true" />
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center" />
+        <!--app:startValue="16"-->
+        <!--app:endValue="28"-->
+        <!--app:progress="24"-->
+        <!--app:startColor="0xFFFFF314"-->
+        <!--app:endColor="0xFFCC151C"-->
+        <!--app:startAngle="-225"-->
+        <!--app:endAngle="45"-->
+        <!--app:arcWidthRate="0.5"-->
+        <!--app:showMark="true"-->
+        <!--app:showProgress="true"-->
+        <!--app:markSize="30"-->
+        <!--app:markColor="0xff33B5E5"-->
+        <!--app:progressTextSize="35"-->
+        <!--app:progressTextColor="0xffFFBB33"-->
+        <!--app:lineColor="0xff33B5E5"-->
+        <!--/>-->
 
 </FrameLayout>
