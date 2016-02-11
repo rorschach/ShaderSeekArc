@@ -15,7 +15,7 @@ allprojects {
 Step 2. Add the dependency
 ```
 dependencies {
-        compile 'com.github.rorschach:ShaderSeekArc:v0.8'
+        compile 'com.github.rorschach:ShaderSeekArc:v1.2'
     }
 ```
 
