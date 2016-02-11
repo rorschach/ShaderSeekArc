@@ -12,7 +12,7 @@ allprojects {
     }
 ```
 
-Step 2. Add the dependency
+Step 2. Add the dependency in moudle build.gradle
 ```
 dependencies {
         compile 'com.github.rorschach:ShaderSeekArc:v1.11'
